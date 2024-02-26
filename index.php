@@ -10,6 +10,6 @@ $router = new Router();
 $router->get('/users', 'UserController@index');
 $router->get('/users/{id}', 'UserController@show');
 $router->post('/users/create', 'UserController@create');
-$router->delete('/users/{id}', 'UserController@delete');
+$router->delete('/users/{id}/delete', 'UserController@delete');
 $router->put('/users/{id}/update', 'UserController@update');
 $router->resolve();

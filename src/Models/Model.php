@@ -39,29 +39,35 @@ abstract class Model {
             $sql = "INSERT INTO {$this->table} ({$fields}) VALUES ({$placeholders})";
             $stmt = $this->prepareAndBind($sql, $data);
             $stmt->execute();
-            return $this->read($this->connection->lastInsertId());
+            return $this->findOrFail($this->connection->lastInsertId());
         } catch (PDOException $e) {
             throw new Exception("Erro ao criar registro: " . $e->getMessage());
         }
     }
 
     /**
-     * Lê um registro da tabela pelo ID.
+     * Lê um registro da tabela pelo ID ou retorna uma exceção se não encontrado.
      *
      * @param int $id ID do registro a ser lido.
-     * @return array|null Dados do registro ou null se não encontrado.
+     * @return array Dados do registro.
+     * @throws Exception Se o registro não for encontrado.
      */
-    public function read(int $id): ?array {
+    public function findOrFail(int $id): array {
         try {
             $sql = "SELECT * FROM {$this->table} WHERE id = :id";
             $stmt = $this->connection->prepare($sql);
             $stmt->bindValue(':id', $id);
             $stmt->execute();
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$result) {
+                throw new Exception("Registro não encontrado.");
+            }
+            return $result;
         } catch (PDOException $e) {
             throw new Exception("Erro ao ler registro: " . $e->getMessage());
         }
     }
+
 
     /**
      * Atualiza um registro na tabela pelo ID.
@@ -86,7 +92,7 @@ abstract class Model {
             $stmt->bindValue(':id', $id);
     
             $stmt->execute();
-            return $this->read($id);
+            return $this->findOrFail($id);
         } catch (PDOException $e) {
             throw new Exception("Erro ao atualizar registro: " . $e->getMessage());
         }
@@ -98,8 +104,11 @@ abstract class Model {
      *
      * @param int $id ID do registro a ser deletado.
      * @return bool Verdadeiro se o registro foi deletado, falso caso contrário.
+     * @throws Exception Se o registro não for encontrado ou ocorrer um erro ao deletar.
      */
     public function delete(int $id): bool {
+        $this->findOrFail($id);
+
         try {
             $sql = "DELETE FROM {$this->table} WHERE id = :id";
             $stmt = $this->connection->prepare($sql);
@@ -109,6 +118,7 @@ abstract class Model {
             throw new Exception("Erro ao deletar registro: " . $e->getMessage());
         }
     }
+
 
     /**
      * Obtém todos os registros da tabela associada ao modelo.

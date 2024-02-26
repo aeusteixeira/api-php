@@ -1,46 +1,67 @@
-<?php 
+<?php
 
 namespace App\Controllers;
 
 use App\Models\User;
 use App\Http\Request;
+use Exception;
 
-class UserController extends Controller{
+class UserController extends Controller {
+    protected $user;
+
+    public function __construct() {
+        $this->user = new User();
+    }
+
     public function index() {
-        $user = new User();
-        return $this->response($user->all());
+        try {
+            $users = $this->user->all();
+            return $this->response($users);
+        } catch (Exception $error) {
+            return $this->response(['message' => $error->getMessage()], 500);
+        }
     }
 
     public function show($id) {
-        $user = new User();
-        $userData = $user->read($id);
-        return $this->response($userData);
-    }
-    
-
-    public function create(Request $request) {
-        $data = $request->all();
-        $user = new User();
-        $userId = $user->create($data);
-        return $this->response(['message' => 'Usuário criado com sucesso', 'user' => $userId]);
-    }
-    
-
-    public function update(Request $request, $id) {
-        $user = new User();
-        $updatedUser = $user->update($id, $request->all());
-    
-        if ($updatedUser) {
-            return $this->response($updatedUser);
-        } else {
-            return $this->response(['error' => 'Usuário não encontrado ou erro na atualização'], 404);
+        try {
+            $userData = $this->user->findOrFail($id);
+            return $this->response($userData);
+        } catch (Exception $error) {
+            return $this->response(['message' => $error->getMessage()], 404);
         }
     }
-    
+
+    public function create(Request $request) {
+        try {
+            $data = $request->all();
+            $userData = $this->user->create($data);
+            return $this->response([
+                'message' => 'Usuário criado com sucesso',
+                'user' => $userData
+            ]);
+        } catch (Exception $error) {
+            return $this->response(['message' => $error->getMessage()], 400);
+        }
+    }
+
+    public function update(Request $request, $id) {
+        try {
+            $userData = $this->user->update($id, $request->all());
+            return $this->response([
+                'message' => 'Usuário atualizado com sucesso',
+                'user' => $userData
+            ]);
+        } catch (Exception $error) {
+            return $this->response(['message' => $error->getMessage()], 400);
+        }
+    }
 
     public function delete($id) {
-        $user = new User();
-        $userDeleted = $user->delete($id);
-        return $this->response($userDeleted);
+        try {
+            $this->user->delete($id);
+            return $this->response(['message' => 'Usuário deletado com sucesso'], 204);
+        } catch (Exception $error) {
+            return $this->response(['message' => $error->getMessage()], 404);
+        }
     }
 }
