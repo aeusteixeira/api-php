@@ -37,7 +37,8 @@ Importe o arquivo `api_db.sql` e ajuste as variáveis globais no `env.php`
     define('DB_NAME', 'db_api');
     define('DB_USER', 'root');
     define('DB_PASSWORD', 'password');
-```# Documentação da API
+```
+# Documentação da API
 
 ## Endpoints de Usuários
 
