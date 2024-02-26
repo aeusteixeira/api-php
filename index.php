@@ -21,5 +21,18 @@ $router->post('/address/create', 'AddressController@create');
 $router->delete('/address/{id}/delete', 'AddressController@delete');
 $router->put('/address/{id}/update', 'AddressController@update');
 
+// Rotas para o CRUD de cidades
+$router->get('/cities', 'CityController@index');
+$router->get('/cities/{id}', 'CityController@show');
+$router->post('/cities/create', 'CityController@create');
+$router->delete('/cities/{id}/delete', 'CityController@delete');
+$router->put('/cities/{id}/update', 'CityController@update');
+
+// Rotas para o CRUD de estados
+$router->get('/states', 'StateController@index');
+$router->get('/states/{id}', 'StateController@show');
+$router->post('/states/create', 'StateController@create');
+$router->delete('/states/{id}/delete', 'StateController@delete');
+$router->put('/states/{id}/update', 'StateController@update');
 
 $router->resolve();

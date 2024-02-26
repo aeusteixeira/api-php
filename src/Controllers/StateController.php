@@ -3,20 +3,20 @@
 namespace App\Controllers;
 
 use App\Http\Request;
-use App\Models\Address;
+use App\Models\State;
 use Exception;
 
-class AddressController extends Controller {
-    protected $address;
+class StateController extends Controller {
+    protected $state;
 
     public function __construct() {
-        $this->address = new Address();
+        $this->state = new State();
     }
 
     public function index() {
         try {
-            $addresss = $this->address->all();
-            return $this->response($addresss);
+            $states = $this->state->all();
+            return $this->response($states);
         } catch (Exception $error) {
             return $this->response(['message' => $error->getMessage()], 500);
         }
@@ -24,9 +24,9 @@ class AddressController extends Controller {
 
     public function show($id) {
         try {
-            $addressData = $this->address->findOrFail($id);
+            $stateData = $this->state->findOrFail($id);
             return $this->response([
-                'address' => $addressData,
+                'state' => $stateData,
             ]);
         } catch (Exception $e) {
             return $this->response(['message' => $e->getMessage()], 404);
@@ -36,10 +36,10 @@ class AddressController extends Controller {
     public function create(Request $request) {
         try {
             $data = $request->all();
-            $addressData = $this->address->create($data);
+            $stateData = $this->state->create($data);
             return $this->response([
-                'message' => 'Endereço criado com sucesso',
-                'address' => $addressData
+                'message' => 'Estado criado com sucesso',
+                'state' => $stateData
             ]);
         } catch (Exception $error) {
             return $this->response(['message' => $error->getMessage()], 400);
@@ -48,10 +48,10 @@ class AddressController extends Controller {
 
     public function update(Request $request, $id) {
         try {
-            $addressData = $this->address->update($id, $request->all());
+            $stateData = $this->state->update($id, $request->all());
             return $this->response([
-                'message' => 'Endereço atualizado com sucesso',
-                'address' => $addressData
+                'message' => 'Estado atualizado com sucesso',
+                'state' => $stateData
             ]);
         } catch (Exception $error) {
             return $this->response(['message' => $error->getMessage()], 400);
@@ -60,8 +60,8 @@ class AddressController extends Controller {
 
     public function delete($id) {
         try {
-            $this->address->delete($id);
-            return $this->response(['message' => 'Endereço deletado com sucesso'], 204);
+            $this->state->delete($id);
+            return $this->response(['message' => 'Estado deletado com sucesso'], 204);
         } catch (Exception $error) {
             return $this->response(['message' => $error->getMessage()], 404);
         }

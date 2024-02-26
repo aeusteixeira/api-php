@@ -25,7 +25,7 @@ class UserController extends Controller {
     public function show($id) {
         try {
             $userData = $this->user->findOrFail($id);
-            $address = $userData->address();  // Acessar a relação de endereço
+            $address = $userData->address();
             return $this->response([
                 'user' => $userData,
                 'address' => $address

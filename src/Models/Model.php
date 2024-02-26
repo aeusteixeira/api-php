@@ -145,18 +145,19 @@ abstract class Model {
      * @return array Relação entre modelos.
      * @throws Exception Se ocorrer um erro ao obter a relação.
      */
-    public function hasOne(string $relatedModel, string $foreignKey, $localKeyValue): array {
-        try {
-            $relatedTable = (new $relatedModel())->getTable();
-            $sql = "SELECT * FROM {$relatedTable} WHERE {$foreignKey} = :localKeyValue";
-            $stmt = $this->connection->prepare($sql);
-            $stmt->bindValue(':localKeyValue', $localKeyValue);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            throw new Exception("Erro ao obter relação: " . $e->getMessage());
-        }
+public function hasOne(string $relatedModel, string $foreignKey, $localKeyValue) {
+    try {
+        $relatedTable = (new $relatedModel())->getTable();
+        $sql = "SELECT * FROM {$relatedTable} WHERE {$foreignKey} = :localKeyValue";
+        $stmt = $this->connection->prepare($sql);
+        $stmt->bindValue(':localKeyValue', $localKeyValue);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC); // Retorna apenas um único resultado
+    } catch (PDOException $e) {
+        throw new Exception("Erro ao obter relação: " . $e->getMessage());
     }
+}
+
 
     /**
      * Obtém o nome da tabela do modelo.
