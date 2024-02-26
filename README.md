@@ -15,7 +15,7 @@ Clone o projeto
 Entre no diretório do projeto
 
 ```bash
-  api-php
+  cd api-php
 ```
 
 Instale as dependências
