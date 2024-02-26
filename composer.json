@@ -1,0 +1,14 @@
+{
+    "name": "conta/api",
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Matheus Teixeira",
+            "email": "contato.matheusteixeira@gmail.com"
+        }
+    ]
+}
