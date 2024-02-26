@@ -25,9 +25,13 @@ class UserController extends Controller {
     public function show($id) {
         try {
             $userData = $this->user->findOrFail($id);
-            return $this->response($userData);
-        } catch (Exception $error) {
-            return $this->response(['message' => $error->getMessage()], 404);
+            $address = $userData->address();  // Acessar a relação de endereço
+            return $this->response([
+                'user' => $userData,
+                'address' => $address
+            ]);
+        } catch (Exception $e) {
+            return $this->response(['message' => $e->getMessage()], 404);
         }
     }
 

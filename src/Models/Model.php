@@ -14,8 +14,7 @@ abstract class Model {
 
     /**
      * Construtor da classe Model.
-     * 
-     * Conecta ao banco de dados.
+     * Estabelece a conexão com o banco de dados.
      */
     public function __construct() {
         try {
@@ -30,81 +29,82 @@ abstract class Model {
      * Cria um novo registro na tabela.
      *
      * @param array $data Dados do novo registro.
-     * @return array Dados do registro recém-criado.
+     * @return self Instância do modelo com dados do registro recém-criado.
+     * @throws Exception Se ocorrer um erro ao criar o registro.
      */
-    public function create(array $data): array {
+    public function create(array $data): self {
         try {
             $fields = $this->getFields($data);
             $placeholders = $this->getPlaceholders($data);
             $sql = "INSERT INTO {$this->table} ({$fields}) VALUES ({$placeholders})";
             $stmt = $this->prepareAndBind($sql, $data);
             $stmt->execute();
-            return $this->findOrFail($this->connection->lastInsertId());
+            $lastInsertId = $this->connection->lastInsertId();
+            return $this->findOrFail($lastInsertId);
         } catch (PDOException $e) {
             throw new Exception("Erro ao criar registro: " . $e->getMessage());
         }
     }
 
     /**
-     * Lê um registro da tabela pelo ID ou retorna uma exceção se não encontrado.
+     * Lê um registro da tabela pelo ID.
      *
      * @param int $id ID do registro a ser lido.
-     * @return array Dados do registro.
-     * @throws Exception Se o registro não for encontrado.
+     * @return self Instância do modelo com dados do registro.
+     * @throws Exception Se o registro não for encontrado ou ocorrer um erro ao ler o registro.
      */
-    public function findOrFail(int $id): array {
+    public function findOrFail(int $id): self {
         try {
             $sql = "SELECT * FROM {$this->table} WHERE id = :id";
             $stmt = $this->connection->prepare($sql);
             $stmt->bindValue(':id', $id);
             $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
             if (!$result) {
                 throw new Exception("Registro não encontrado.");
             }
-            return $result;
+
+            foreach ($result as $key => $value) {
+                $this->$key = $value;
+            }
+
+            return $this;
         } catch (PDOException $e) {
-            throw new Exception("Erro ao ler registro: " . $e->getMessage());
+            throw new Exception("Erro ao buscar registro: " . $e->getMessage());
         }
     }
-
 
     /**
      * Atualiza um registro na tabela pelo ID.
      *
      * @param int $id ID do registro a ser atualizado.
      * @param array $data Dados para atualização.
-     * @return array Dados do registro atualizado.
+     * @return self Instância do modelo com dados do registro atualizado.
+     * @throws Exception Se ocorrer um erro ao atualizar o registro.
      */
-    public function update($id, $data) {
+    public function update(int $id, array $data): self {
         try {
             $updates = $this->getUpdateString($data);
             if (empty($updates)) {
                 throw new Exception("Nenhum dado fornecido para atualização");
             }
-    
+
             $sql = "UPDATE {$this->table} SET {$updates} WHERE id = :id";
-            $stmt = $this->connection->prepare($sql);
-    
-            foreach ($data as $key => $value) {
-                $stmt->bindValue(":$key", $value);
-            }
-            $stmt->bindValue(':id', $id);
-    
+            $stmt = $this->prepareAndBind($sql, $data, $id);
             $stmt->execute();
             return $this->findOrFail($id);
         } catch (PDOException $e) {
             throw new Exception("Erro ao atualizar registro: " . $e->getMessage());
         }
     }
-    
 
     /**
      * Deleta um registro da tabela pelo ID.
      *
      * @param int $id ID do registro a ser deletado.
      * @return bool Verdadeiro se o registro foi deletado, falso caso contrário.
-     * @throws Exception Se o registro não for encontrado ou ocorrer um erro ao deletar.
+     * @throws Exception Se ocorrer um erro ao deletar o registro.
      */
     public function delete(int $id): bool {
         $this->findOrFail($id);
@@ -119,14 +119,8 @@ abstract class Model {
         }
     }
 
-
     /**
      * Obtém todos os registros da tabela associada ao modelo.
-     *
-     * Este método executa uma consulta SQL para selecionar todos os registros
-     * da tabela especificada na propriedade `$table` do modelo. Ele retorna
-     * um array de arrays associativos, onde cada array interno representa um
-     * registro da tabela.
      *
      * @return array|null Um array de registros ou null em caso de falha.
      * @throws Exception Se ocorrer um erro durante a execução da consulta SQL.
@@ -142,7 +136,6 @@ abstract class Model {
         }
     }
 
-
     /**
      * Obtém a relação entre modelos.
      *
@@ -150,8 +143,9 @@ abstract class Model {
      * @param string $foreignKey Chave estrangeira.
      * @param mixed $localKeyValue Valor da chave local.
      * @return array Relação entre modelos.
+     * @throws Exception Se ocorrer um erro ao obter a relação.
      */
-    public function getRelationship(string $relatedModel, string $foreignKey, $localKeyValue): array {
+    public function hasOne(string $relatedModel, string $foreignKey, $localKeyValue): array {
         try {
             $relatedTable = (new $relatedModel())->getTable();
             $sql = "SELECT * FROM {$relatedTable} WHERE {$foreignKey} = :localKeyValue";
@@ -173,25 +167,24 @@ abstract class Model {
         return $this->table;
     }
 
-/**
- * Prepara e vincula valores a uma declaração SQL.
- *
- * @param string $sql Declaração SQL.
- * @param array $data Dados para vincular.
- * @param int|null $id ID opcional para vincular.
- * @return PDOStatement Declaração preparada.
- */
-private function prepareAndBind(string $sql, array $data, ?int $id = null): PDOStatement {
-    $stmt = $this->connection->prepare($sql);
-    foreach ($data as $key => $value) {
-        $stmt->bindValue(":$key", $value);
+    /**
+     * Prepara e vincula valores a uma declaração SQL.
+     *
+     * @param string $sql Declaração SQL.
+     * @param array $data Dados para vincular.
+     * @param int|null $id ID opcional para vincular.
+     * @return PDOStatement Declaração preparada.
+     */
+    private function prepareAndBind(string $sql, array $data, ?int $id = null): PDOStatement {
+        $stmt = $this->connection->prepare($sql);
+        foreach ($data as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+        if ($id !== null) {
+            $stmt->bindValue(':id', $id);
+        }
+        return $stmt;
     }
-    if ($id !== null) {
-        $stmt->bindValue(':id', $id);
-    }
-    return $stmt;
-}
-
 
     /**
      * Obtém uma string de campos separados por vírgula a partir de um array de dados.
@@ -226,5 +219,4 @@ private function prepareAndBind(string $sql, array $data, ?int $id = null): PDOS
         }
         return implode(', ', $updates);
     }
-
 }
